@@ -10,6 +10,7 @@ import {
   StreamableFile,
   ParseFilePipe,
   MaxFileSizeValidator,
+  Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FilesService } from './files.service';
@@ -17,7 +18,7 @@ import type { Response } from 'express';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(private readonly filesService: FilesService) { }
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
@@ -31,8 +32,9 @@ export class FilesController {
       }),
     )
     file: Express.Multer.File,
+    @Body() body: { key?: string },
   ) {
-    return this.filesService.uploadFile(file);
+    return this.filesService.uploadFile(file, body.key);
   }
 
   @Get('*path')

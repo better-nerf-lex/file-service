@@ -33,8 +33,8 @@ export class FilesService {
     this.bucketName = this.configService.getOrThrow('AWS_S3_BUCKET');
   }
 
-  async uploadFile(file: Express.Multer.File) {
-    const key = `${Date.now()}-${file.originalname}`;
+  async uploadFile(file: Express.Multer.File, providedKey?: string) {
+    const key = providedKey || `${Date.now()}-${file.originalname}`;
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
@@ -49,9 +49,11 @@ export class FilesService {
       // The implementation plan says: "return { key, url, size, mimetype }".
       // The URL should point to this service's GET endpoint.
       const url = `/files/${key}`;
+      const s3Url = `s3://${this.bucketName}/${key}`;
       return {
         key,
         url,
+        s3Url,
         size: file.size,
         mimetype: file.mimetype,
         originalName: file.originalname,
