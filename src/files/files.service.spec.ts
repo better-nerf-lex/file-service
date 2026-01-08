@@ -5,7 +5,6 @@ import { Logger, NotFoundException } from '@nestjs/common';
 
 describe('FilesService', () => {
   let service: FilesService;
-  let configService: ConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -14,7 +13,7 @@ describe('FilesService', () => {
         {
           provide: ConfigService,
           useValue: {
-            getOrThrow: jest.fn((key: string) => {
+            getOrThrow: jest.fn((key: string): string => {
               const config = {
                 AWS_REGION: 'us-east-1',
                 AWS_S3_ENDPOINT: 'http://localhost:4566',
@@ -22,7 +21,7 @@ describe('FilesService', () => {
                 AWS_SECRET_KEY: 'test',
                 AWS_S3_BUCKET: 'test-bucket',
               };
-              return config[key];
+              return config[key as keyof typeof config];
             }),
           },
         },
@@ -30,7 +29,6 @@ describe('FilesService', () => {
     }).compile();
 
     service = module.get<FilesService>(FilesService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   it('should be defined', () => {
@@ -43,6 +41,7 @@ describe('FilesService', () => {
         .spyOn(Logger.prototype, 'log')
         .mockImplementation();
       const s3SendSpy = jest
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         .spyOn((service as any).s3Client, 'send')
         .mockResolvedValue({
           Body: {},
@@ -63,6 +62,7 @@ describe('FilesService', () => {
         .spyOn(Logger.prototype, 'warn')
         .mockImplementation();
       const s3SendSpy = jest
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         .spyOn((service as any).s3Client, 'send')
         .mockRejectedValue({
           name: 'NoSuchKey',

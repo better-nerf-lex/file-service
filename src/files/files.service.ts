@@ -56,8 +56,10 @@ export class FilesService {
         mimetype: file.mimetype,
         originalName: file.originalname,
       };
-    } catch (error) {
-      this.logger.error(`Failed to upload file: ${error.message}`, error.stack);
+    } catch (error: unknown) {
+      const msg = `Failed to upload file: ${error instanceof Error ? error.message : String(error)}`;
+      const stack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(msg, stack);
       throw new InternalServerErrorException('Failed to upload file');
     }
   }
@@ -80,12 +82,13 @@ export class FilesService {
         contentType: response.ContentType,
         contentLength: response.ContentLength,
       };
-    } catch (error) {
-      if (error.name === 'NoSuchKey') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'NoSuchKey') {
         this.logger.warn(`File not found: ${key}`);
         throw new NotFoundException(`File not found: ${key}`);
       }
-      this.logger.error(`Failed to get file ${key}: ${error.message}`);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to get file ${key}: ${errMsg}`);
       throw new InternalServerErrorException('Failed to get file');
     }
   }
@@ -102,8 +105,9 @@ export class FilesService {
 
     try {
       await this.s3Client.send(command);
-    } catch (error) {
-      this.logger.error(`Failed to delete file ${key}: ${error.message}`);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to delete file ${key}: ${errMsg}`);
       throw new InternalServerErrorException('Failed to delete file');
     }
   }
@@ -123,13 +127,14 @@ export class FilesService {
     try {
       await this.s3Client.send(copyCommand);
       this.logger.log(`File copied from ${sourceKey} to ${destinationKey}`);
-    } catch (error) {
-      if (error.name === 'NoSuchKey') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'NoSuchKey') {
         this.logger.warn(`Source file not found: ${sourceKey}`);
         throw new NotFoundException(`Source file not found: ${sourceKey}`);
       }
+      const errMsg = error instanceof Error ? error.message : String(error);
       this.logger.error(
-        `Failed to copy file from ${sourceKey} to ${destinationKey}: ${error.message}`,
+        `Failed to copy file from ${sourceKey} to ${destinationKey}: ${errMsg}`,
       );
       throw new InternalServerErrorException('Failed to move file');
     }
@@ -142,9 +147,10 @@ export class FilesService {
     try {
       await this.s3Client.send(deleteCommand);
       this.logger.log(`Source file deleted: ${sourceKey}`);
-    } catch (error) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
       this.logger.error(
-        `Failed to delete source file ${sourceKey} after copy: ${error.message}`,
+        `Failed to delete source file ${sourceKey} after copy: ${errMsg}`,
       );
       throw new InternalServerErrorException(
         'File copied but failed to delete source',

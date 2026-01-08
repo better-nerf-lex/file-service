@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FilesController } from './files.controller';
 import { FilesService } from './files.service';
+import type { Response } from 'express';
 
 describe('FilesController', () => {
   let controller: FilesController;
@@ -35,37 +36,40 @@ describe('FilesController', () => {
   describe('getFile', () => {
     it('should call getFileStream with the correct key', async () => {
       const key = 'test/path/file.pdf';
-      const res = {
+      const res: Response = {
         set: jest.fn(),
-      } as any;
+      } as Response;
 
       await controller.getFile(key, res);
 
-      expect(filesService.getFileStream).toHaveBeenCalledWith(key);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(filesService.getFileStream as jest.Mock).toHaveBeenCalledWith(key);
     });
 
     it('should handle comma-separated path correctly', async () => {
       const key = 'test,path,file.pdf';
-      const res = {
+      const res: Response = {
         set: jest.fn(),
-      } as any;
+      } as Response;
 
       await controller.getFile(key, res);
 
-      expect(filesService.getFileStream).toHaveBeenCalledWith(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(filesService.getFileStream as jest.Mock).toHaveBeenCalledWith(
         'test/path/file.pdf',
       );
     });
 
     it('should handle array path correctly', async () => {
-      const key = ['case-001', 'pleadings', 'complaint_filing.pdf'] as any;
-      const res = {
+      const key = ['case-001', 'pleadings', 'complaint_filing.pdf'];
+      const res: Response = {
         set: jest.fn(),
-      } as any;
+      } as Response;
 
       await controller.getFile(key, res);
 
-      expect(filesService.getFileStream).toHaveBeenCalledWith(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(filesService.getFileStream as jest.Mock).toHaveBeenCalledWith(
         'case-001/pleadings/complaint_filing.pdf',
       );
     });
@@ -77,7 +81,8 @@ describe('FilesController', () => {
 
       await controller.deleteFile(key);
 
-      expect(filesService.deleteFile).toHaveBeenCalledWith(key);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(filesService.deleteFile as jest.Mock).toHaveBeenCalledWith(key);
     });
 
     it('should handle comma-separated path correctly', async () => {
@@ -85,17 +90,19 @@ describe('FilesController', () => {
 
       await controller.deleteFile(key);
 
-      expect(filesService.deleteFile).toHaveBeenCalledWith(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(filesService.deleteFile as jest.Mock).toHaveBeenCalledWith(
         'test/path/file.pdf',
       );
     });
 
     it('should handle array path correctly', async () => {
-      const key = ['case-001', 'pleadings', 'complaint_filing.pdf'] as any;
+      const key = ['case-001', 'pleadings', 'complaint_filing.pdf'];
 
       await controller.deleteFile(key);
 
-      expect(filesService.deleteFile).toHaveBeenCalledWith(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(filesService.deleteFile as jest.Mock).toHaveBeenCalledWith(
         'case-001/pleadings/complaint_filing.pdf',
       );
     });
