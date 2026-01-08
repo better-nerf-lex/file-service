@@ -10,6 +10,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  CopyObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'stream';
@@ -108,6 +109,60 @@ export class FilesService {
       this.logger.error(`Failed to delete file ${key}: ${error.message}`);
       throw new InternalServerErrorException('Failed to delete file');
     }
+  }
+
+  async moveFile(sourceKey: string, destinationKey: string) {
+    if (!sourceKey || !destinationKey) {
+      this.logger.warn('moveFile called with undefined or empty keys');
+      throw new NotFoundException('Source and destination keys are required');
+    }
+
+    // First, copy the file to the new location
+    const copyCommand = new CopyObjectCommand({
+      Bucket: this.bucketName,
+      CopySource: `${this.bucketName}/${sourceKey}`,
+      Key: destinationKey,
+    });
+
+    try {
+      await this.s3Client.send(copyCommand);
+      this.logger.log(`File copied from ${sourceKey} to ${destinationKey}`);
+    } catch (error) {
+      if (error.name === 'NoSuchKey') {
+        this.logger.warn(`Source file not found: ${sourceKey}`);
+        throw new NotFoundException(`Source file not found: ${sourceKey}`);
+      }
+      this.logger.error(
+        `Failed to copy file from ${sourceKey} to ${destinationKey}: ${error.message}`,
+      );
+      throw new InternalServerErrorException('Failed to move file');
+    }
+
+    // Then, delete the original file
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: sourceKey,
+    });
+
+    try {
+      await this.s3Client.send(deleteCommand);
+      this.logger.log(`Source file deleted: ${sourceKey}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete source file ${sourceKey} after copy: ${error.message}`,
+      );
+      // The file was copied successfully, but deletion failed
+      // This is a partial success - we should still inform the caller
+      throw new InternalServerErrorException(
+        'File copied but failed to delete source',
+      );
+    }
+
+    return {
+      message: 'File moved successfully',
+      sourceKey,
+      destinationKey,
+    };
   }
 
   async generatePresignedUrl(key: string) {

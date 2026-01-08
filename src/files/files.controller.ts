@@ -63,4 +63,11 @@ export class FilesController {
     await this.filesService.deleteFile(fileKey);
     return { message: 'File deleted successfully' };
   }
+
+  @Post('move')
+  async moveFile(
+    @Body() body: { sourceKey: string; destinationKey: string },
+  ) {
+    return this.filesService.moveFile(body.sourceKey, body.destinationKey);
+  }
 }
