@@ -18,7 +18,7 @@ import type { Response } from 'express';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) { }
+  constructor(private readonly filesService: FilesService) {}
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
@@ -42,9 +42,6 @@ export class FilesController {
     @Param('path') key: string | string[],
     @Res({ passthrough: true }) res: Response,
   ) {
-    // If the path contains slashes, path-to-regexp might return it as a string
-    // but some versions of NestJS might return it as an array or a comma-separated string.
-    // Using *path is the correct syntax for NestJS 11+ / path-to-regexp 8+.
     const fileKey = Array.isArray(key) ? key.join('/') : key.replace(/,/g, '/');
     const fileData = await this.filesService.getFileStream(fileKey);
 
@@ -65,9 +62,7 @@ export class FilesController {
   }
 
   @Post('move')
-  async moveFile(
-    @Body() body: { sourceKey: string; destinationKey: string },
-  ) {
+  async moveFile(@Body() body: { sourceKey: string; destinationKey: string }) {
     return this.filesService.moveFile(body.sourceKey, body.destinationKey);
   }
 }

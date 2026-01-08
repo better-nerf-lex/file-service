@@ -46,9 +46,6 @@ export class FilesService {
     try {
       await this.s3Client.send(command);
       // In a real S3 scenario, the URL might be https://bucket.s3.region.amazonaws.com/key
-      // For LocalStack/FileService, we want to return a URL that points to THIS service or the gateway?
-      // The implementation plan says: "return { key, url, size, mimetype }".
-      // The URL should point to this service's GET endpoint.
       const url = `/files/${key}`;
       const s3Url = `s3://${this.bucketName}/${key}`;
       return {
@@ -117,7 +114,6 @@ export class FilesService {
       throw new NotFoundException('Source and destination keys are required');
     }
 
-    // First, copy the file to the new location
     const copyCommand = new CopyObjectCommand({
       Bucket: this.bucketName,
       CopySource: `${this.bucketName}/${sourceKey}`,
@@ -138,7 +134,6 @@ export class FilesService {
       throw new InternalServerErrorException('Failed to move file');
     }
 
-    // Then, delete the original file
     const deleteCommand = new DeleteObjectCommand({
       Bucket: this.bucketName,
       Key: sourceKey,
@@ -151,8 +146,6 @@ export class FilesService {
       this.logger.error(
         `Failed to delete source file ${sourceKey} after copy: ${error.message}`,
       );
-      // The file was copied successfully, but deletion failed
-      // This is a partial success - we should still inform the caller
       throw new InternalServerErrorException(
         'File copied but failed to delete source',
       );
