@@ -39,10 +39,6 @@ COPY --from=builder /app ./
 RUN mkdir -p /data && chmod 777 /data
 ENV NODE_ENV=production
 
-RUN printf '%s\n' \
-  '#!/bin/bash' \
-  'echo "Starting service"' \
-  'node dist/main.js' \
-  > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+EXPOSE 8080
 
-ENTRYPOINT ["/bin/bash", "/app/entrypoint.sh"]
+CMD ["node", "dist/main.js"]
