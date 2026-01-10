@@ -22,15 +22,26 @@ export class FilesService {
   private readonly logger = new Logger(FilesService.name);
 
   constructor(private readonly configService: ConfigService) {
-    this.s3Client = new S3Client({
-      region: this.configService.getOrThrow('AWS_REGION'),
-      endpoint: this.configService.getOrThrow('AWS_S3_ENDPOINT'),
-      credentials: {
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
+    const region = this.configService.getOrThrow('AWS_REGION');
+    const endpoint = this.configService.get('AWS_S3_ENDPOINT');
+
+    const s3Config: any = {
+      region,
+    };
+
+    // In production (ECS), use IAM task role (no explicit credentials needed)
+    // In development, use explicit credentials for LocalStack
+    if (!isProduction) {
+      s3Config.endpoint = endpoint;
+      s3Config.credentials = {
         accessKeyId: this.configService.getOrThrow('AWS_ACCESS_KEY'),
         secretAccessKey: this.configService.getOrThrow('AWS_SECRET_KEY'),
-      },
-      forcePathStyle: true, // Needed for LocalStack
-    });
+      };
+      s3Config.forcePathStyle = true; // Needed for LocalStack
+    }
+
+    this.s3Client = new S3Client(s3Config);
     this.bucketName = this.configService.getOrThrow('AWS_S3_BUCKET');
   }
 
