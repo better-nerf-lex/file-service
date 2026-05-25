@@ -13,7 +13,7 @@ import {
   Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { FilesService } from './files.service';
+import { FilesService } from './service';
 import type { Response } from 'express';
 
 @Controller('files')

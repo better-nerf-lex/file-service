@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { FilesService } from './files.service';
+import { FilesService } from '../service';
 import { ConfigService } from '@nestjs/config';
 import { Logger, NotFoundException } from '@nestjs/common';
 
@@ -13,6 +13,13 @@ describe('FilesService', () => {
         {
           provide: ConfigService,
           useValue: {
+            get: jest.fn((key: string): string | undefined => {
+              const config = {
+                NODE_ENV: 'development',
+                AWS_S3_ENDPOINT: 'http://localhost:4566',
+              };
+              return config[key as keyof typeof config];
+            }),
             getOrThrow: jest.fn((key: string): string => {
               const config = {
                 AWS_REGION: 'us-east-1',
@@ -64,9 +71,9 @@ describe('FilesService', () => {
       const s3SendSpy = jest
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         .spyOn((service as any).s3Client, 'send')
-        .mockRejectedValue({
-          name: 'NoSuchKey',
-        });
+        .mockRejectedValue(
+          Object.assign(new Error('missing'), { name: 'NoSuchKey' }),
+        );
 
       await expect(service.getFileStream('non-existent')).rejects.toThrow();
 

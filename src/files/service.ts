@@ -11,6 +11,7 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
   CopyObjectCommand,
+  S3ClientConfig,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'stream';
@@ -22,11 +23,12 @@ export class FilesService {
   private readonly logger = new Logger(FilesService.name);
 
   constructor(private readonly configService: ConfigService) {
-    const isProduction = this.configService.get('NODE_ENV') === 'production';
-    const region = this.configService.getOrThrow('AWS_REGION');
-    const endpoint = this.configService.get('AWS_S3_ENDPOINT');
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+    const region = this.configService.getOrThrow<string>('AWS_REGION');
+    const endpoint = this.configService.get<string>('AWS_S3_ENDPOINT');
 
-    const s3Config: any = {
+    const s3Config: S3ClientConfig = {
       region,
     };
 
@@ -35,14 +37,15 @@ export class FilesService {
     if (!isProduction) {
       s3Config.endpoint = endpoint;
       s3Config.credentials = {
-        accessKeyId: this.configService.getOrThrow('AWS_ACCESS_KEY'),
-        secretAccessKey: this.configService.getOrThrow('AWS_SECRET_KEY'),
+        accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY'),
+        secretAccessKey:
+          this.configService.getOrThrow<string>('AWS_SECRET_KEY'),
       };
       s3Config.forcePathStyle = true; // Needed for LocalStack
     }
 
     this.s3Client = new S3Client(s3Config);
-    this.bucketName = this.configService.getOrThrow('AWS_S3_BUCKET');
+    this.bucketName = this.configService.getOrThrow<string>('AWS_S3_BUCKET');
   }
 
   async uploadFile(file: Express.Multer.File, providedKey?: string) {

@@ -10,11 +10,11 @@ When this repository is opened inside the Lexai parent workspace, also follow `.
 
 | Path | Responsibility |
 | --- | --- |
-| `src/files/files.controller.ts` | Internal HTTP upload, streaming download, delete, and move endpoints |
-| `src/files/files.service.ts` | AWS S3 client setup and object operations |
-| `src/app.module.ts` | Nest module/config wiring |
-| `src/app.controller.ts` | Root/health behavior |
-| `test` and `*.spec.ts` | Unit and HTTP integration tests |
+| `src/files/controller.ts` | Internal HTTP upload, streaming download, delete, and move endpoints |
+| `src/files/service.ts` | AWS S3 client setup and object operations |
+| `src/app/module.ts` | Nest module/config wiring |
+| `src/app/controller.ts` | Root/health behavior |
+| `src/**/__tests__` and `test` | Unit and HTTP integration tests |
 
 ## Service Boundaries
 
