@@ -1,48 +1,14 @@
-# Private Knowledge Base
+# Knowledge Fixtures
 
-This folder is deployed by the file-service dev workflow into the private documents bucket under:
+This directory contains only non-sensitive development fixtures. Real legal
+filings and conversation exports must not be committed here. Conversation and
+template directories are ignored to prevent accidental additions.
 
-```text
-s3://dev-paragrafic-documents/knowledge/
-```
+`manifest.json` deliberately contains an empty `conversations` list. The gateway
+supports generation without private conversation exports or PDF examples.
+The schema seeds in gateway and infra also omit the removed PDF references.
 
-It is not served by CloudFront or the frontend bucket. Gateway can read these objects through file-service using the same private path it already uses for context and template files.
-
-## Structure
-
-- `manifest.json` maps stable IDs and tags to individual conversation files.
-- `conversations/*.txt` contains one exported conversation per file.
-- `templates/document-examples/**` contains private template examples used by gateway seed data.
-- `samples/**` contains private sample files for local/dev verification.
-
-Conversation filenames should be the slugified ChatGPT title summary:
-
-```text
-Odpowiedź na pozew -> odpowiedz-na-pozew.txt
-Wniosek o odroczenie kary -> wniosek-o-odroczenie-kary.txt
-```
-
-Gateway selects conversations by matching the requested document title, prompt, answers, requirements, manifest `id`,
-`title`, `documentTypes`, and `tags`.
-
-## Manifest Entry
-
-```json
-{
-  "id": "divorce-with-children",
-  "title": "Divorce With Children",
-  "description": "Useful prompt flow and final draft for divorce documents involving children.",
-  "language": "pl",
-  "documentTypes": ["divorce"],
-  "tags": ["family-law", "children", "alimony"],
-  "path": "conversations/divorce-with-children.txt"
-}
-```
-
-The full S3 key for that file will be:
-
-```text
-knowledge/conversations/divorce-with-children.txt
-```
-
-Keep real conversations out of logs and public buckets. Treat files here as confidential source material.
+The dev deployment syncs this directory to the private documents bucket under
+`knowledge/` with `--delete`. Deploying this cleanup removes the deleted files
+from that live prefix; it does not remove S3 object versions, backups, existing
+database rows, old container images, or Git history.
